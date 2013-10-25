@@ -97,7 +97,6 @@ sub init_references {
 my (@new_rev,@new_path,@new_branch,@pathrev);
 
 my %typemap = qw(pm pl pl pl);
-print get_filetype(@ARGV)."\n";
 sub get_filetype {
     local $_ = shift;
     s{.*/}{};
