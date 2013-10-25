@@ -24,7 +24,7 @@ sub flush_path_bfield($\%\%) {
     for my $value (keys %values) {
         my $ids = join ",", @{$values{$value}};
         my $sql = "update path set $field=$value where path in ($ids)";
-        print $sql;
+        #print $sql;
         sql_exec $sql;
     }
 }
@@ -77,7 +77,7 @@ create table if not exists branch(branch int not null primary key,path int not n
 create table if not exists vars(repo_root text,write_lock text);
 	};
     unless (sql_value("select count(*) from vars")) {
-        die "please specify --repo_root $url" unless $repo_root;
+        die "please specify --repo_root \$url" unless $repo_root;
         sql_exec "insert into vars(repo_root) values(?)",$repo_root;
     }
 }
@@ -96,10 +96,12 @@ sub init_references {
 
 my (@new_rev,@new_path,@new_branch,@pathrev);
 
-my %typemap = qw(pm pl);
+my %typemap = qw(pm pl pl pl);
+print get_filetype(@ARGV)."\n";
 sub get_filetype {
-    my ($name) = @_;
-    my ($type) = $name =~ m{\.(.*?)rm $};
+    local $_ = shift;
+    s{.*/}{};
+    my ($type) = m{\.([^.]+)$};
     return undef unless $type;
     $type = lc($type);
     return exists $typemap{$type}?$typemap{$type}:$type;
@@ -241,4 +243,3 @@ sub find_branch {
     my ($parent) = $name =~ m{^(.*)/};
     return find_branch($parent);
 }
-=cut
