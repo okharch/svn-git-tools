@@ -6,6 +6,7 @@ use File::Temp qw/ tempdir /;
 use FindBin qw($Bin);
 use Cwd qw(cwd);
 use File::Slurp qw(read_file);
+use Digest::MD5 'md5_hex';
 
 # we run this script to extract vba modules from xlsm file. please use full name of xls file as a parameter
 # c:/cygwin/home/kharcheo/xlsvba/xlsvba.vbs file.xls
@@ -63,7 +64,8 @@ post '/xlsvba' => sub {
     # return archive to the requester
     my $data = read_file $tar, binmode => ':raw';
     #system("cp $tar /tmp"); # this is for debug
-    return $self->render(data => $data); 
+    $logger->debug(sprintf('length of returned data %d, md5 is %s',length($data),md5_hex($data)));
+    return $self->render(data => $data, format => 'gz'); 
 };
 
 app->start;
