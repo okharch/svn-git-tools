@@ -2,8 +2,7 @@ use strict;
 use warnings;
 use HTTP::Request::Common;
 use LWP::UserAgent;
-use File::Slurp qw(write_file);
-use Data::Dumper;
+use File::Temp qw(tempfile);
 
 my ($file,$url) = @ARGV;
 
@@ -13,17 +12,18 @@ $url ||= "http://localhost:3000/xlsvba";
 
 my ($path) = $file =~ m{^(.*)\.};
 
-my $ua = LWP::UserAgent->new(env_proxy => 0,
-                             keep_alive => 1,
-                             timeout => 120,
-	                            agent => 'Mozilla/5.0',
-                            );
+my $ua = LWP::UserAgent->new(
+    env_proxy => 0,
+    keep_alive => 1,
+    timeout => 120,
+    agent => 'Mozilla/5.0',
+);
 
-my $response = $ua->post($url,
+my $response = $ua->post(
+    $url,
     Content_Type => 'form-data',
-    Content      => [ "ac" => 'upload',
-    "file" => [ $file ],
-]);
+    Content      => [ "ac" => 'upload',  "file" => [ $file ] ]
+);
 
 #$req->authorization_basic('username', 'password');	
 
@@ -36,8 +36,18 @@ else {
 
 sub extract_modules {
     my ($content,$path) = @_;
-    my $archive = '/tmp/tt.tar.gz';
-    write_file $archive,$content;
+    # write response to temporary file
+    my ($fh,$filename) = tempfile();    
+    binmode($fh);# switch file mode to binary
+    print $fh $content;
+    close $fh;
+    # rename it to have .tar.gz ending
+    my $archive = "$filename.tar.gz";
+    printf STDERR "temporary archive is $archive should contain %d bytes\n",length($content);
+    system("mv $filename $archive");
+    # remove folder with modules if any ...
     system("rm -rf $path");
+    # exctract files from archive to $path
     system("tar xzf $archive");
+    unlink($archive); # rm $archive
 }
